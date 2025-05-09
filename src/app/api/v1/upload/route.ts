@@ -61,6 +61,7 @@ export async function POST(req: Request) {
       { status: 200 }
     );
   } catch (_error) {
+    console.error("Error uploading file:", _error);
     return new Response("Internal server error", { status: 500 });
   }
 }
