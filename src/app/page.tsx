@@ -27,7 +27,7 @@ export default function Home() {
         </div>
 
         <div className="w-1/2 flex justify-center">
-          <img src="/hero.svg" alt="" width={450} height={450} />
+          <Image src="/hero.svg" alt="" width={450} height={450} />
         </div>
       </div>
     </div>

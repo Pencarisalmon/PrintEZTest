@@ -1,19 +1,44 @@
 "use client";
 import { useState } from "react";
+import Image from "next/image";
+// Define an interface for the expected structure of the Midtrans Snap result object
+// Add more properties as needed based on the actual data Midtrans returns
+interface MidtransSnapResult {
+  transaction_status?: string;
+  order_id?: string;
+  payment_type?: string;
+  gross_amount?: string;
+  status_code?: string;
+  status_message?: string;
+  fraud_status?: string;
+  transaction_id?: string;
+  // You might need to add more properties depending on what you expect to use
+  // from the result object (e.g., va_numbers, permata_va_number, etc.)
+  [key: string]: any; // Optional: Use if there are many unpredictable properties,
+                      // but try to list common ones explicitly first.
+                      // For linting purposes, removing this is ideal if possible.
+                      // Let's keep it for flexibility for now, but the linter error
+                      // on the *callback parameter itself* will be fixed by the interface.
+}
+
 
 declare global {
   interface Window {
     snap: {
       embed: (token: string, options: {
         embedId: string;
-        onSuccess?: (result: any) => void;
-        onPending?: (result: any) => void;
-        onError?: (result: any) => void;
+        // Use the defined interface for the result parameter instead of any
+        onSuccess?: (result: MidtransSnapResult) => void;
+        onPending?: (result: MidtransSnapResult) => void;
+        onError?: (result: MidtransSnapResult) => void;
         onClose?: () => void;
       }) => void;
+      // If you also use window.snap.pay(), declare it here too:
+      // pay?: (token: string, options?: { ... }) => void;
     };
   }
 }
+
 import PrintForm from "@/components/ui/printForm";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
@@ -57,7 +82,8 @@ const PrintProcess = () => {
 
     try {
       const apiUrl = "/api/v1/upload";
-      const {data:result} = await axios.post(apiUrl, formData);
+      // Add a type assertion or interface for the axios response data
+      const { data: result } = await axios.post<{ data: { id: string } }>(apiUrl, formData);
       const fileId = result.data.id;
       console.log("File ID:", fileId);
       sessionStorage.setItem("idFiles", fileId);
@@ -77,7 +103,8 @@ const PrintProcess = () => {
     }
     console.log(idFiles, idForms);
     const apiUrl = "/api/v1/transaction";
-    const {data:result} = await axios.post(apiUrl, {
+    // Add a type assertion or interface for the axios response data
+    const { data: result } = await axios.post<{ data: { error?: string; midtrans_token: string; id: string } }>(apiUrl, {
       idFiles,
       idForms,
     });
@@ -94,6 +121,7 @@ const PrintProcess = () => {
     if (!token) {
       throw new Error("Token Midtrans tidak ditemukan.");
     }
+
     const updateTransaction = async (status: string) => {
       try {
         await axios.put(apiUrl, {
@@ -105,28 +133,38 @@ const PrintProcess = () => {
         console.error("Gagal memperbarui transaksi:", error);
       }
     };
-    window.snap.embed(token, {
-      embedId: "snap-embed-container",
-      onSuccess: async (result:any) => {
-        await updateTransaction("paid");
-        console.log("Pembayaran berhasil:", result);
-        alert("Pembayaran berhasil!");
-        sessionStorage.clear();
-      },
-      onPending: (result:any) => {
-        console.log("Menunggu pembayaran:", result);
-        alert("Pembayaran masih dalam proses.");
-      },
-      onError: (result:any) => {
-        console.error("Pembayaran gagal:", result);
-        alert("Pembayaran gagal. Silakan coba lagi.");
-      },
-      onClose: () => {
-        console.warn("Popup ditutup tanpa menyelesaikan pembayaran.");
-        alert("Anda belum menyelesaikan pembayaran.");
-      },
-    });
+
+    if (window.snap && window.snap.embed) { // Check if snap.embed is available
+      window.snap.embed(token, {
+        embedId: "snap-embed-container",
+        // Removed `:any` here. TypeScript infers the type from the global declaration.
+        onSuccess: async (result) => {
+          await updateTransaction("paid");
+          console.log("Pembayaran berhasil:", result);
+          alert("Pembayaran berhasil!");
+          sessionStorage.clear();
+        },
+        // Removed `:any` here. TypeScript infers the type from the global declaration.
+        onPending: (result) => {
+          console.log("Menunggu pembayaran:", result);
+          alert("Pembayaran masih dalam proses.");
+        },
+        // Removed `:any` here. TypeScript infers the type from the global declaration.
+        onError: (result) => {
+          console.error("Pembayaran gagal:", result);
+          alert("Pembayaran gagal. Silakan coba lagi.");
+        },
+        onClose: () => {
+          console.warn("Popup ditutup tanpa menyelesaikan pembayaran.");
+          alert("Anda belum menyelesaikan pembayaran.");
+        },
+      });
+    } else {
+        console.error("Midtrans Snap script not loaded.");
+        alert("Payment system not available. Please try again later.");
+    }
   }
+
   return (
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-4">PrintEZ</h1>
@@ -161,7 +199,7 @@ const PrintProcess = () => {
               {preview ? (
                 <div className="mt-4">
                   {file?.type.includes("image") ? (
-                    <img
+                    <Image
                       src={preview}
                       alt="Preview"
                       className="w-40 h-auto border p-2"
@@ -189,7 +227,6 @@ const PrintProcess = () => {
               <h2 className="text-xl mb-2">Pembayaran</h2>
               <button
                 className="bg-green-500 text-white p-2"
-                //onClick={() => alert("Payment Successful!")}
                 onClick={async() => {await getPayment()}}
               >
                 Konfirmasi Pembayaran
@@ -200,7 +237,8 @@ const PrintProcess = () => {
               >
                 Kembali
               </button>
-              <div id="snap-embed-container" className="mt-4 w-full h-full"></div>
+              {/* The snap-embed-container is where the Midtrans Snap UI will be embedded */}
+              <div id="snap-embed-container" className="mt-4 w-full" style={{ minHeight: '400px' }}></div>
             </div>
           )}
         </div>

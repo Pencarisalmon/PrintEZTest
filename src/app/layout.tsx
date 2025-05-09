@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Script from 'next/script'; // Import the Script component
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="SB-Mid-client-B6hBtrqpHcqkDcse"></script>
+        <Script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="SB-Mid-client-B6hBtrqpHcqkDcse"/>
       </head>      
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

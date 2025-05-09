@@ -1,6 +1,7 @@
-import { Button } from "@/components/ui/button";
-import { buttonVariants } from "@/components/ui/button";
+// import { Button } from "@/components/ui/button";
+// import { buttonVariants } from "@/components/ui/button";
 
+import Image from "next/image";
 const Navbar = () => {
   return (
     <nav className="flex items-center justify-between px-16 shadow-md fixed top-0 left-0 right-0 bg-white">
