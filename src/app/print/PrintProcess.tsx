@@ -14,11 +14,6 @@ interface MidtransSnapResult {
   transaction_id?: string;
   // You might need to add more properties depending on what you expect to use
   // from the result object (e.g., va_numbers, permata_va_number, etc.)
-  [key: string]: any; // Optional: Use if there are many unpredictable properties,
-                      // but try to list common ones explicitly first.
-                      // For linting purposes, removing this is ideal if possible.
-                      // Let's keep it for flexibility for now, but the linter error
-                      // on the *callback parameter itself* will be fixed by the interface.
 }
 
 
